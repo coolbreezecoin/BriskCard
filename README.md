@@ -10,37 +10,20 @@
 ## ✨ 功能特性
 
 ### 🔓 公共查询（无需登录）
-- **卡密查询** - 通过卡密查询完整卡片信息（卡号、CVC、有效期等）
-- **查询并激活** - 一键查询并自动激活未激活的卡密（如果查询到未激活状态会自动激活）
-- **卡号查询** - 通过16位卡号查询余额和消费记录
-- **按需查询交易** - 卡密查询后，点击"查询交易记录"按钮查看余额和消费记录
-- **实时余额** - 查看可用额度、已入账、待处理金额
-- **消费记录** - 查看详细的交易历史
-- **一键复制** - 快速复制卡片信息
-- **分离刷新** - 余额和消费记录可单独刷新
-- **速率限制保护** - 自动检测并提示激活接口的速率限制
+- 卡密查询、查询并激活、卡号查询
+- 实时余额和消费记录
+- 一键复制卡片信息
 
 ### 🔐 安全特性
-- **分级访问** - 公共查询和管理后台分离
-- **登录鉴权** - 管理后台需要密码登录
-- **Session 管理** - 可配置的会话过期时间和安全策略
-- **密钥管理** - 强制要求环境变量配置敏感信息
+- 分级访问、登录鉴权、Session 加密
+- 文件访问保护、非 root 运行
 
 ### 📋 核心功能
-- **卡片管理** - 完整的 CRUD 操作（创建、读取、更新、删除）
-- **卡片激活** - 集成 MisaCard API，支持查询并激活虚拟卡
-- **批量查询** - 一键查询所有未激活卡密的激活状态
-- **批量导入** - 支持 TXT/JSON 格式批量导入卡密
-- **智能过期检测** - 自动检测并标记过期卡片
-- **退款管理** - 跟踪和管理卡片退款申请
-- **消费记录** - 查询卡片交易历史和余额信息
+- 卡片管理、激活、批量导入
+- 过期检测、退款管理、消费记录
 
 ### 🎨 用户界面
-- **现代化 Web 界面** - 基于 Tailwind CSS 的响应式设计
-- **实时数据统计** - 卡片状态、额度、激活率等数据可视化
-- **批量操作** - 支持批量标记退款、批量删除等操作
-- **一键复制** - 快速复制已过期未退款卡号，并可自动标记
-- **安全登录页** - 精美的登录界面，支持密码显示/隐藏
+- 现代化响应式设计、实时数据统计、批量操作
 
 #### 界面预览
 ![公共页面](static/query.png)
@@ -49,12 +32,7 @@
 ![卡片列表](static/list.png)
 
 ### 🔧 技术特性
-- **RESTful API** - 标准的 REST API 设计
-- **异步处理** - 基于 FastAPI 的异步请求处理
-- **自动文档** - Swagger UI / ReDoc 自动生成 API 文档（需要登录访问）
-- **数据验证** - Pydantic 模型验证
-- **激活日志** - 完整的激活历史记录
-- **Docker 支持** - 开箱即用的容器化部署
+- RESTful API、异步处理、自动文档、Docker 支持
 
 ## 📦 技术栈
 
@@ -97,7 +75,14 @@ nano .env  # 或使用其他编辑器
 - `ADMIN_PASSWORD` - 管理员登录密码（建议使用强密码）
 - `SECRET_KEY` - Session 加密密钥（使用 `python -c "import secrets; print(secrets.token_urlsafe(32))"` 生成）
 
-3. **启动服务**
+3. **设置文件权限**
+```bash
+mkdir -p data
+chmod 700 data
+chown -R 1000:1000 data 2>/dev/null || true
+```
+
+4. **启动服务**
 ```bash
 # 启动容器
 docker-compose up -d
@@ -112,7 +97,7 @@ docker-compose down
 docker-compose down -v
 ```
 
-4. **访问系统**
+5. **访问系统**
 - 打开浏览器访问: http://localhost:8000
 - 使用 .env 中配置的 `ADMIN_PASSWORD` 登录
 
@@ -156,103 +141,64 @@ cp .env.example .env
 nano .env  # 或使用其他编辑器
 ```
 
-**必须配置的环境变量：**
-```bash
-# MisaCard API Token（必需）
-MISACARD_API_TOKEN='your_actual_token_here'
-
-# 管理员密码（必需）
-ADMIN_PASSWORD=your_strong_password
-
-# Session 密钥（必需，使用以下命令生成）
-# python -c "import secrets; print(secrets.token_urlsafe(32))"
-SECRET_KEY=generated_secret_key_here
-
-# 可选配置
-DEBUG=false  # 生产环境设为 false
-SESSION_MAX_AGE=86400  # Session 过期时间（秒）
-```
+**必须配置：** `MISACARD_API_TOKEN`、`ADMIN_PASSWORD`、`SECRET_KEY`
 
 **5. 初始化数据库**
 ```bash
-# 创建数据库和表
 python3 init_db.py init
-
-# 检查数据库状态（可选）
-python3 init_db.py check
 ```
 
 **6. 启动服务**
-
 ```bash
-# 开发模式（自动重载）
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-
-# 生产模式
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
 ```
 
 **7. 访问系统**
-- 公共查询页: http://localhost:8000 （无需登录）
-- 管理后台: http://localhost:8000/admin （需要登录）
-- 登录页面: http://localhost:8000/login
-- API 文档: http://localhost:8000/docs （需要登录）
+- 公共查询: http://localhost:8000
+- 管理后台: http://localhost:8000/admin
 
 ## 🔒 安全说明
 
-### 安全特性
+### 已实施的安全措施
 
-1. **强制鉴权** - 管理后台页面和 API 端点需要登录才能访问
-2. **Session 加密** - 使用 SECRET_KEY 对 Session 进行加密签名
-3. **配置验证** - 启动时强制检查必需的环境变量
-4. **Session 过期** - 可配置的会话超时时间
-5. **CSRF 保护** - Session cookie 设置 SameSite=Lax
+- ✅ API 认证保护：所有管理 API 需要登录
+- ✅ 文件访问保护：自动阻止访问数据库和敏感文件
+- ✅ Session 加密：使用 SECRET_KEY 加密，生产环境自动启用 HTTPS only
+- ✅ 非 root 运行：Docker 容器以非 root 用户运行
 
-### 安全建议
+### 安全加固建议
 
-**生产环境部署时，请务必：**
-1. ✅ 使用强密码作为 `ADMIN_PASSWORD`
-2. ✅ 生成随机的 `SECRET_KEY`（不要使用示例值）
-3. ✅ 设置 `DEBUG=false`
-4. ✅ 启用 HTTPS（在反向代理层如 Nginx）
-5. ✅ 定期备份数据库文件
-6. ✅ 使用防火墙限制访问
-7. ✅ 定期更新依赖包
+**必须执行：**
+```bash
+# 设置文件权限
+chmod 700 data/
+chmod 600 data/cards.db .env
+
+# 使用 Nginx 反向代理（推荐）
+# 配置规则阻止直接访问 .db、.env 等文件
+```
+
+**强烈建议：**
+- 启用 HTTPS
+- 配置防火墙
+- 定期备份数据库
 
 ### 密钥生成
 
 ```bash
 # 生成 SECRET_KEY
 python -c "import secrets; print(secrets.token_urlsafe(32))"
-
-# 生成强密码
-python -c "import secrets; print(secrets.token_urlsafe(16))"
 ```
 
 ## 📖 使用说明
 
 ### 公共查询（无需登录）
 
-访问首页 http://localhost:8000 即可使用公共查询功能：
+访问首页 http://localhost:8000 即可使用：
 
-1. **查询卡密**：输入完整卡密（如 `mio-xxxxx`），点击"查询"按钮
-   - 仅查询卡片信息，**不会自动激活未激活的卡密**
-   - 显示卡号、CVC、有效期、额度、账单地址等完整信息
-   - 点击卡号旁边的"查询交易记录"按钮查看余额和消费记录
-   - 可一键复制所有信息
-
-2. **查询并激活**：输入完整卡密（如 `mio-xxxxx`），点击"查询并激活"按钮
-   - 先查询卡片信息
-   - 如果查询到卡片状态为"未激活"，会自动调用激活接口
-   - 激活成功后显示完整的卡片信息（卡号、CVC、有效期等）
-   - 如果触发速率限制，会显示相应提示
-   - 适合需要激活卡密的场景
-
-3. **查询卡号**：输入16位卡号
-   - 直接显示账户余额和消费记录
-   - 适合只想查看余额的场景
-
-4. **刷新数据**：点击"刷新"按钮可单独更新余额和消费记录
+- **查询**：输入卡密查询信息（不会自动激活）
+- **查询并激活**：输入卡密，如果未激活会自动激活
+- **查询卡号**：输入16位卡号查看余额和交易记录
 
 ### 管理后台登录
 
@@ -265,273 +211,70 @@ python -c "import secrets; print(secrets.token_urlsafe(16))"
 
 ### 卡片管理
 
-#### 批量导入卡片
-1. 进入「批量导入」页面
-2. 粘贴卡片数据（支持多行）
-3. 格式示例：
-```
-卡密: mio-xxxxx 额度: 1 有效期: 1小时
-卡密: mio-xxxxx 额度: 2 有效期: 1小时
-```
-4. 点击「开始导入」
-5. 导入的卡片状态为「未激活」
-
-#### 激活卡片
-- 方式一：在公共查询页面使用「查询并激活」功能（无需登录）
-- 方式二：在「卡片列表」中点击卡片的「激活」按钮
-- 方式三：在「卡片列表」页面点击「查询未激活卡密」按钮批量查询并更新未激活卡密的激活状态
-
-#### 查询未激活卡密
-1. 在「卡片列表」页面点击「查询未激活卡密」按钮
-2. 系统会自动查询所有未激活卡密的激活状态
-3. 查询完成后会自动刷新列表显示最新状态
-4. 已激活的卡密信息固定，不会重复查询
-
-#### 退款管理
-1. 在卡片列表中点击「标记退款」按钮
-2. 或使用「复制未退款卡号」功能批量复制已过期未退款的卡号
-3. 复制后可选择批量标记为已申请退款
-
-#### 查看卡片详情
-1. 点击卡片列表中的「详情」按钮
-2. 查看完整的卡片信息、余额、消费记录等
+- **批量导入**：在「批量导入」页面粘贴卡密数据（格式：`卡密: mio-xxxxx 额度: 1 有效期: 1小时`）
+- **激活卡片**：在卡片列表点击「激活」按钮，或使用「查询未激活卡密」批量查询
+- **退款管理**：点击「标记退款」或使用「复制未退款卡号」功能
+- **查看详情**：点击「详情」查看完整信息和交易记录
 
 ## 📚 API 文档
 
-系统提供了完整的 API 文档（**需要登录后才能访问**）：
+- **Swagger UI（需要登录）**: http://localhost:8000/docs
+- **ReDoc（需要登录）**: http://localhost:8000/redoc
 
-- **Swagger UI**: http://localhost:8000/docs（需要登录）
-- **ReDoc**: http://localhost:8000/redoc（需要登录）
-
-**注意：** 访问文档页面前，请先通过 `/login` 页面登录系统。
-
-### 主要 API 端点
-
-#### 认证相关
-- `POST /api/auth/login` - 登录（**公开**，无需登录）
-- `POST /api/auth/logout` - 退出登录（**需要登录**）
-
-#### 卡片管理（**需要登录**）
-- `GET /api/cards/` - 获取卡片列表（支持搜索和过滤）
-- `POST /api/cards/` - 创建新卡片
-- `GET /api/cards/{card_id}` - 获取单个卡片详情
-- `PUT /api/cards/{card_id}` - 更新卡片信息
-- `DELETE /api/cards/{card_id}` - 删除卡片
+**主要端点：**
+- `POST /api/auth/login` - 登录
+- `GET /api/cards/` - 卡片列表
 - `POST /api/cards/{card_id}/activate` - 激活卡片
-- `POST /api/cards/{card_id}/query` - 查询并更新卡片信息
-- `POST /api/cards/{card_id}/refund` - 切换退款状态
-- `GET /api/cards/{card_id}/logs` - 获取卡片激活历史记录
-- `GET /api/cards/{card_id}/transactions` - 获取卡片交易记录
-- `GET /api/cards/batch/unreturned-card-numbers` - 获取已过期未退款卡号列表
+- `POST /api/import/text` - 批量导入
+- `GET /health` - 健康检查（公开）
 
-#### 批量导入（**需要登录**）
-- `POST /api/import/text` - 文本批量导入
-- `POST /api/import/json` - JSON 批量导入
+**注意：** 除 `/api/auth/login` 和 `/health` 外，所有 API 都需要登录。
 
-#### 系统
-- `GET /health` - 健康检查（**公开**，无需登录）
-- `GET /api/info` - API 信息（**需要登录**）
+## 🐳 Docker 配置
 
-**注意：** 
-- 公共查询页面直接调用 MisaCard API，不经过后端服务器
-- API 文档页面（`/docs`、`/redoc`）需要登录后才能访问
-- **除 `/api/auth/login` 和 `/health` 外，所有其他 API 接口都需要登录后才能访问**
-- 未登录访问受保护的 API 接口会返回 `401 Unauthorized` 错误
+数据库文件存储在 `./data/cards.db`，通过 volume 挂载。
 
-## 🐳 Docker 配置说明
-
-### Dockerfile 说明
-
-项目包含优化的 Dockerfile：
-- 基于 Python 3.12-slim 镜像
-- 分层构建，优化缓存
-- 包含健康检查
-- 自动创建数据目录
-
-### docker-compose.yml 说明
-
-提供完整的 docker-compose 配置：
-- 自动环境变量映射
-- 数据持久化（通过 volume）
-- 健康检查配置
-- 自动重启策略
-
-### 数据持久化
-
-数据库文件存储在 `./data/cards.db`，通过 Docker volume 挂载：
+**常用命令：**
 ```bash
-# 备份数据库
-cp data/cards.db data/cards.db.backup
-
-# 恢复数据库
-cp data/cards.db.backup data/cards.db
-```
-
-### 常用 Docker 命令
-
-```bash
-# 查看容器状态
-docker-compose ps
-
-# 查看实时日志
-docker-compose logs -f
-
-# 重启服务
-docker-compose restart
-
-# 进入容器
-docker-compose exec misacard-manager bash
-
-# 查看资源使用
-docker stats misacard-manager
-
-# 更新镜像并重启
-docker-compose pull
-docker-compose up -d
+docker compose up -d          # 启动
+docker compose logs -f        # 查看日志
+docker compose down           # 停止
+docker compose restart        # 重启
 ```
 
 ## 🛠️ 开发
 
-### 项目结构
+**项目结构：** `app/` - 应用代码，`data/` - 数据目录，`templates/` - 页面模板
 
-```
-MisaCard-Manager/
-├── app/
-│   ├── __init__.py
-│   ├── main.py              # 主应用入口
-│   ├── config.py            # 配置管理
-│   ├── models.py            # 数据库模型
-│   ├── schemas.py           # Pydantic 模型
-│   ├── crud.py              # 数据库操作
-│   ├── database.py          # 数据库连接
-│   ├── api/
-│   │   ├── cards.py         # 卡片 API 路由
-│   │   └── imports.py       # 导入 API 路由
-│   ├── templates/
-│   │   ├── index.html       # 管理后台页面
-│   │   ├── query.html       # 公共查询页面
-│   │   └── login.html       # 登录页面
-│   ├── static/              # 静态文件
-│   └── utils/
-│       ├── activation.py    # 激活逻辑
-│       └── parser.py        # 数据解析
-├── data/                    # 数据目录（Docker）
-├── .env                     # 环境变量配置
-├── .env.example             # 环境变量模板
-├── requirements.txt         # Python 依赖
-├── Dockerfile               # Docker 镜像配置
-├── docker-compose.yml       # Docker Compose 配置
-├── .dockerignore            # Docker 忽略文件
-├── init_db.py               # 数据库初始化脚本
-└── README.md                # 项目文档
-```
+**运行测试：** `pytest`
 
-### 运行测试
+## ⚙️ 环境变量
 
-```bash
-# 安装测试依赖（已包含在 requirements.txt）
-pip install pytest pytest-asyncio
-
-# 运行测试
-pytest
-
-# 查看覆盖率
-pytest --cov=app
-```
-
-### 开发建议
-
-1. 使用虚拟环境隔离依赖
-2. 启用 DEBUG 模式方便调试
-3. 代码修改后自动重载（`--reload` 参数）
-4. 使用 API 文档测试接口
-
-## ⚙️ 环境变量配置
-
-| 变量名 | 必需 | 默认值 | 说明 |
-|--------|------|--------|------|
-| `MISACARD_API_TOKEN` | ✅ | - | MisaCard API 访问令牌 |
-| `ADMIN_PASSWORD` | ✅ | - | 管理员登录密码 |
-| `SECRET_KEY` | ✅ | - | Session 加密密钥 |
-| `MISACARD_API_BASE_URL` | ❌ | `https://api.misacard.com/api/card` | API 基础 URL |
-| `DATABASE_URL` | ❌ | `sqlite:///./cards.db` | 数据库连接字符串 |
-| `DEBUG` | ❌ | `true` | 调试模式 |
-| `SESSION_MAX_AGE` | ❌ | `86400` | Session 过期时间（秒） |
+| 变量名 | 必需 | 说明 |
+|--------|------|------|
+| `MISACARD_API_TOKEN` | ✅ | MisaCard API 令牌 |
+| `ADMIN_PASSWORD` | ✅ | 管理员密码 |
+| `SECRET_KEY` | ✅ | Session 加密密钥 |
+| `DEBUG` | ❌ | 调试模式（默认 `true`） |
+| `SESSION_MAX_AGE` | ❌ | Session 过期时间（默认 86400 秒） |
 
 ## 🔄 数据库管理
 
-### 使用 init_db.py 脚本
-
 ```bash
-# 初始化数据库（创建表）
-python init_db.py init
-
-# 检查数据库状态
-python init_db.py check
-
-# 清空所有数据（危险操作！）
-python init_db.py clear
-
-# 完全重置数据库
-python init_db.py reset
-```
-
-### 手动备份
-
-```bash
-# 备份数据库
-cp cards.db cards.db.backup-$(date +%Y%m%d)
-
-# 恢复数据库
-cp cards.db.backup-20231201 cards.db
+python init_db.py init    # 初始化
+python init_db.py check   # 检查状态
+cp data/cards.db data/cards.db.backup  # 备份
 ```
 
 ## 🚨 故障排除
 
-### 常见问题
+**环境变量未设置：** 确保 `.env` 文件存在且包含 `ADMIN_PASSWORD`、`SECRET_KEY`、`MISACARD_API_TOKEN`
 
-#### 1. 启动时提示环境变量未设置
+**登录后跳转回登录页：** 检查 `SECRET_KEY` 是否设置且固定，清除浏览器 Cookie 后重试
 
-**错误信息：**
-```
-ValueError: ADMIN_PASSWORD 环境变量未设置！请在 .env 文件中配置
-```
+**数据库权限错误：** 执行 `chmod 700 data && chown -R 1000:1000 data`
 
-**解决方法：**
-- 确保 `.env` 文件存在
-- 检查 `.env` 文件中是否有 `ADMIN_PASSWORD=your_password`
-- 确保没有拼写错误
-
-#### 2. 登录后立即跳转回登录页
-
-**可能原因：**
-- `SECRET_KEY` 未设置或每次重启都变化
-- Session cookie 配置问题
-
-**解决方法：**
-- 在 `.env` 中设置固定的 `SECRET_KEY`
-- 清除浏览器 Cookie 后重试
-
-#### 3. Docker 容器无法启动
-
-**解决方法：**
-```bash
-# 查看详细日志
-docker-compose logs
-
-# 检查环境变量
-docker-compose config
-
-# 重建镜像
-docker-compose up -d --build
-```
-
-#### 4. 无法访问 MisaCard API
-
-**解决方法：**
-- 检查 `MISACARD_API_TOKEN` 是否正确
-- 检查网络连接
-- 查看 API 响应日志
+**无法访问 API：** 检查 `MISACARD_API_TOKEN` 和网络连接
 
 ## 📄 许可证
 
@@ -552,9 +295,4 @@ docker-compose up -d --build
 
 ---
 
-**重要提示：** 本系统已集成完整的登录鉴权功能，可以安全地部署在公网环境。但仍建议：
-- 使用强密码
-- 启用 HTTPS
-- 配置防火墙
-- 定期更新依赖
-- 定期备份数据
+**生产环境部署建议：** 设置文件权限、使用 Nginx 反向代理、启用 HTTPS、定期备份数据。

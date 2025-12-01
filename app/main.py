@@ -12,7 +12,7 @@ import os
 from .database import engine
 from . import models
 from .api import cards, imports
-from .config import ADMIN_PASSWORD, SECRET_KEY, SESSION_MAX_AGE, MISACARD_API_TOKEN
+from .config import ADMIN_PASSWORD, SECRET_KEY, SESSION_MAX_AGE, MISACARD_API_TOKEN, DEBUG
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -23,6 +23,22 @@ def check_auth(request: Request):
 class AuthMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         path = request.url.path
+        
+        # 安全：阻止直接访问敏感文件
+        sensitive_extensions = [".db", ".sqlite", ".sqlite3", ".env", ".log"]
+        if any(path.endswith(ext) for ext in sensitive_extensions):
+            return JSONResponse(
+                status_code=404,
+                content={"detail": "Not Found"}
+            )
+        
+        # 安全：阻止访问隐藏文件（以 . 开头）
+        path_parts = path.strip("/").split("/")
+        if any(part.startswith(".") for part in path_parts if part):
+            return JSONResponse(
+                status_code=404,
+                content={"detail": "Not Found"}
+            )
         
         # 公开路径（不需要登录）
         public_paths = ["/", "/login", "/api/auth/login", "/health", "/static"]
@@ -67,7 +83,7 @@ app.add_middleware(
     secret_key=SECRET_KEY,
     max_age=SESSION_MAX_AGE,
     same_site="lax",
-    https_only=False
+    https_only=not DEBUG  # 生产环境启用 HTTPS only
 )
 
 app.include_router(cards.router, prefix="/api")
