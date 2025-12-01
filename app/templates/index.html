@@ -361,6 +361,12 @@
                             </svg>
                             复制未退款卡号
                         </button>
+                        <button onclick="queryUnactivatedCards()" class="bg-gradient-to-r from-green-500 to-green-600 text-white px-3 py-1.5 lg:px-4 lg:py-2 rounded-lg hover:from-green-600 hover:to-green-700 transition text-xs lg:text-sm font-semibold shadow-md hover:shadow-lg flex items-center gap-1.5">
+                            <svg class="w-3.5 h-3.5 lg:w-4 lg:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                            查询未激活卡密
+                        </button>
                         <button onclick="loadCards()" class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-3 py-1.5 lg:px-4 lg:py-2 rounded-lg hover:from-blue-600 hover:to-blue-700 transition text-xs lg:text-sm font-semibold shadow-md hover:shadow-lg flex items-center gap-1.5">
                             <svg class="w-3.5 h-3.5 lg:w-4 lg:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -747,6 +753,7 @@
                     cards = cards.filter(card => !card.refund_requested);
                 }
 
+
                 const tbody = document.getElementById('cardsTableBody');
                 const emptyState = document.getElementById('emptyState');
 
@@ -805,6 +812,161 @@
                 }
             } catch (error) {
                 alert('加载卡片列表失败: ' + error.message);
+            }
+        }
+
+        // 手动查询未激活卡密的激活状态
+        async function queryUnactivatedCards() {
+            try {
+                const search = document.getElementById('searchInput')?.value || '';
+                const status = document.getElementById('statusFilter')?.value || '';
+                const refundFilter = document.getElementById('refundFilter')?.value || '';
+
+                let url = '/api/cards/?';
+                if (search) url += 'search=' + encodeURIComponent(search) + '&';
+                if (status && status !== 'active' && status !== 'not_expired') {
+                    url += 'status=' + encodeURIComponent(status);
+                }
+
+                const response = await fetch(url);
+                let cards = await response.json();
+
+                // 过滤掉已删除的卡片
+                cards = cards.filter(card => card.status !== 'deleted');
+
+                // 前端过滤
+                if (status === 'active') {
+                    cards = cards.filter(card => card.is_activated);
+                } else if (status === 'not_expired') {
+                    cards = cards.filter(card => card.is_activated && card.status !== 'expired');
+                }
+
+                // 应用退款状态筛选
+                if (refundFilter === 'requested') {
+                    cards = cards.filter(card => card.refund_requested === true);
+                } else if (refundFilter === 'not_requested') {
+                    cards = cards.filter(card => !card.refund_requested);
+                }
+
+                // 只查询未激活的卡片
+                const unactivatedCards = cards.filter(card => !card.is_activated);
+                
+                if (unactivatedCards.length === 0) {
+                    showToast('当前没有未激活的卡密', 'info');
+                    return;
+                }
+
+                // 查询未激活卡密的状态
+                await queryCardsStatus(unactivatedCards);
+                
+                // 查询完成后刷新列表
+                loadCards();
+            } catch (error) {
+                showToast('查询失败: ' + error.message, 'error');
+            }
+        }
+
+        // 查询卡片状态（批量查询未激活卡密的激活状态）
+        async function queryCardsStatus(cards) {
+            if (cards.length === 0) return;
+
+            // 显示查询进度提示
+            const progressToast = showProgressToast(`正在查询 ${cards.length} 个未激活卡密的激活状态...`, cards.length);
+            
+            let successCount = 0;
+            let failCount = 0;
+            let completedCount = 0;
+            const concurrency = 3; // 并发数，避免触发速率限制
+            const delay = 200; // 每个请求之间的延迟（毫秒）
+
+            // 分批处理
+            for (let i = 0; i < cards.length; i += concurrency) {
+                const batch = cards.slice(i, i + concurrency);
+                const promises = batch.map(async (card, batchIndex) => {
+                    try {
+                        const response = await fetch(`/api/cards/${encodeURIComponent(card.card_id)}/query`, {
+                            method: 'POST'
+                        });
+                        if (response.ok) {
+                            successCount++;
+                        } else {
+                            failCount++;
+                        }
+                    } catch (error) {
+                        failCount++;
+                    } finally {
+                        completedCount++;
+                        updateProgressToast(progressToast, completedCount, cards.length);
+                    }
+                });
+
+                await Promise.all(promises);
+                
+                // 批次之间延迟，避免速率限制
+                if (i + concurrency < cards.length) {
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                }
+            }
+
+            // 关闭进度提示
+            closeProgressToast(progressToast);
+            
+            // 显示完成提示
+            if (failCount > 0) {
+                showToast(`查询完成：成功 ${successCount}，失败 ${failCount}`, 'info');
+            } else {
+                showToast(`已查询 ${successCount} 个未激活卡密的激活状态`, 'success');
+            }
+        }
+
+        // 显示进度提示
+        function showProgressToast(message, total) {
+            const toast = document.createElement('div');
+            toast.id = 'queryProgressToast';
+            toast.className = 'fixed top-4 right-4 px-4 py-3 lg:px-6 lg:py-4 rounded-lg shadow-lg bg-blue-500 text-white z-50 fade-in text-sm lg:text-base min-w-[280px]';
+            toast.innerHTML = `
+                <div class="flex items-center gap-3">
+                    <svg class="animate-spin h-5 w-5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <div class="flex-1">
+                        <div class="font-semibold">${message}</div>
+                        <div class="text-xs mt-1">
+                            <span id="queryProgressText">0</span> / ${total}
+                        </div>
+                        <div class="w-full bg-blue-300 rounded-full h-1.5 mt-1.5">
+                            <div id="queryProgressBar" class="bg-white h-1.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(toast);
+            return toast;
+        }
+
+        // 更新进度提示
+        function updateProgressToast(toast, current, total) {
+            const progressText = toast.querySelector('#queryProgressText');
+            const progressBar = toast.querySelector('#queryProgressBar');
+            if (progressText) {
+                progressText.textContent = current;
+            }
+            if (progressBar) {
+                const percentage = (current / total) * 100;
+                progressBar.style.width = percentage + '%';
+            }
+        }
+
+        // 关闭进度提示
+        function closeProgressToast(toast) {
+            if (toast) {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(-20px)';
+                toast.style.transition = 'all 0.3s ease';
+                setTimeout(() => {
+                    toast.remove();
+                }, 300);
             }
         }
 
