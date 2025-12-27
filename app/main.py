@@ -12,6 +12,7 @@ import os
 from .database import engine
 from . import models
 from .api import cards, imports
+from .api import public
 from .config import ADMIN_PASSWORD, SECRET_KEY, SESSION_MAX_AGE, MISACARD_API_TOKEN, DEBUG
 
 models.Base.metadata.create_all(bind=engine)
@@ -42,7 +43,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
         
         # 公开路径（不需要登录）
         public_exact_paths = {"/", "/login", "/api/auth/login", "/health"}
-        public_prefix_paths = ["/static"]  # 仅以这些前缀开头的路径无需登录
+        public_prefix_paths = ["/static", "/api/public"]  # 仅以这些前缀开头的路径无需登录
 
         is_public = path in public_exact_paths or any(path.startswith(p) for p in public_prefix_paths)
         
@@ -90,6 +91,7 @@ app.add_middleware(
 
 app.include_router(cards.router, prefix="/api")
 app.include_router(imports.router, prefix="/api")
+app.include_router(public.router, prefix="/api")
 
 templates_path = os.path.join(os.path.dirname(__file__), "templates")
 static_path = os.path.join(os.path.dirname(__file__), "static")
