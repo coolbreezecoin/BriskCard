@@ -397,24 +397,29 @@
                 <button class="copy-mini" data-bill="billName">复制</button>
               </div>
               <div class="info-row">
-                <div class="info-label">街道地址</div>
-                <div class="info-value" id="billStreet">21700 W 50TH ST</div>
+                <div class="info-label">街道地址1</div>
+                <div class="info-value" id="billStreet">41 Glenn Rd C23</div>
                 <button class="copy-mini" data-bill="billStreet">复制</button>
               </div>
               <div class="info-row">
                 <div class="info-label">街道地址2</div>
-                <div class="info-value" id="billStreet2"></div>
+                <div class="info-value" id="billStreet2">无</div>
                 <button class="copy-mini" data-bill="billStreet2">复制</button>
               </div>
               <div class="info-row">
                 <div class="info-label">城市</div>
-                <div class="info-value" id="billCity">SHAWNEE</div>
+                <div class="info-value" id="billCity">East Hartford</div>
                 <button class="copy-mini" data-bill="billCity">复制</button>
               </div>
               <div class="info-row">
                 <div class="info-label">州</div>
-                <div class="info-value" id="billState">Kansas</div>
+                <div class="info-value" id="billState">Connecticut</div>
                 <button class="copy-mini" data-bill="billState">复制</button>
+              </div>
+              <div class="info-row">
+                <div class="info-label">邮编</div>
+                <div class="info-value" id="billZip">06118</div>
+                <button class="copy-mini" data-bill="billZip">复制</button>
               </div>
               <div class="info-row">
                 <div class="info-label">国家</div>
@@ -454,6 +459,7 @@
       const billStreet2 = document.getElementById("billStreet2");
       const billCity = document.getElementById("billCity");
       const billState = document.getElementById("billState");
+      const billZip = document.getElementById("billZip");
       const billCountry = document.getElementById("billCountry");
 
       const fieldLabels = {
@@ -476,19 +482,21 @@
 
       const billingLabels = {
         billName: "姓名",
-        billStreet: "街道地址",
+        billStreet: "街道地址1",
         billStreet2: "街道地址2",
         billCity: "城市",
         billState: "州",
+        billZip: "邮编",
         billCountry: "国家",
       };
 
       const billingValues = {
         billName: "Donald Smith",
-        billStreet: "21700 W 50TH ST",
-        billStreet2: "",
-        billCity: "SHAWNEE",
-        billState: "Kansas",
+        billStreet: "41 Glenn Rd C23",
+        billStreet2: "无",
+        billCity: "East Hartford",
+        billState: "Connecticut",
+        billZip: "06118",
         billCountry: "美国",
       };
 
@@ -630,6 +638,7 @@
         billStreet2.textContent = billingValues.billStreet2;
         billCity.textContent = billingValues.billCity;
         billState.textContent = billingValues.billState;
+        billZip.textContent = billingValues.billZip;
         billCountry.textContent = billingValues.billCountry;
       };
 
@@ -695,10 +704,9 @@
         const key = button.dataset.field;
         const value = fieldValues[key];
         if (!value || value === "-") return;
-        const label = fieldLabels[key] || key;
         try {
-          await navigator.clipboard.writeText(`${label}：${value}`);
-          statusText.textContent = `${label}已复制。`;
+          await navigator.clipboard.writeText(value);
+          statusText.textContent = "已复制。";
         } catch (error) {
           statusText.textContent = "复制失败，请手动复制。";
         }
@@ -710,10 +718,9 @@
         const key = button.dataset.bill;
         const value = billingValues[key];
         if (value === undefined || value === null) return;
-        const label = billingLabels[key] || key;
         try {
-          await navigator.clipboard.writeText(`${label}：${value}`);
-          statusText.textContent = `${label}已复制。`;
+          await navigator.clipboard.writeText(value);
+          statusText.textContent = "已复制。";
         } catch (error) {
           statusText.textContent = "复制失败，请手动复制。";
         }
