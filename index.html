@@ -222,12 +222,14 @@
 
       .batch-results {
         display: grid;
-        gap: 10px;
-        max-height: 260px;
+        gap: 6px;
+      }
+
+      .batch-scroll {
+        display: block;
+        height: 240px;
         overflow-y: auto;
         padding-right: 4px;
-        flex: 1;
-        min-height: 0;
       }
 
       .batch-row {
@@ -235,21 +237,30 @@
         grid-template-columns: 1.6fr 0.8fr 0.7fr;
         gap: 12px;
         align-items: center;
-        padding: 8px 10px;
+        padding: 0 10px;
         border-radius: 14px;
         background: rgba(255, 255, 255, 0.04);
         border: 1px solid var(--border);
         font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
         font-size: 13px;
+        height: 40px;
       }
 
       .batch-head {
         color: var(--muted);
         font-family: "Noto Serif SC", "PingFang SC", "Microsoft YaHei", serif;
         font-size: 12px;
-        background: transparent;
+        background: rgba(11, 16, 32, 0.6);
         border: none;
-        padding: 0 10px 2px;
+        padding: 0 10px;
+        height: 40px;
+        align-items: center;
+      }
+
+      .batch-rows {
+        display: grid;
+        gap: 2px;
+        align-content: start;
       }
 
       .batch-empty {
@@ -518,8 +529,10 @@
                 <div>有效期</div>
                 <div>安全码</div>
               </div>
-              <div class="batch-rows" id="batchRows"></div>
-              <div class="batch-empty" id="batchEmpty">暂无结果</div>
+              <div class="batch-scroll">
+                <div class="batch-rows" id="batchRows"></div>
+                <div class="batch-empty" id="batchEmpty">暂无结果</div>
+              </div>
             </div>
             <div class="batch-actions">
               <button class="btn secondary compact" id="batchCopyBtn" disabled>
