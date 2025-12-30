@@ -705,7 +705,7 @@
       const formatExpire = (month, year) => {
         if (!month || !year) return "-";
         const mm = String(month).padStart(2, "0");
-        const yy = String(year).length === 2 ? `20${year}` : String(year);
+        const yy = String(year).slice(-2);
         return `${mm}/${yy}`;
       };
 
