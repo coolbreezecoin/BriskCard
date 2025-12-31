@@ -560,32 +560,32 @@
               </div>
               <div class="info-row">
                 <div class="info-label">街道地址1</div>
-                <div class="info-value" id="billStreet">41 Glenn Rd C23</div>
+                <div class="info-value" id="billStreet">-</div>
                 <button class="copy-mini" data-bill="billStreet">复制</button>
               </div>
               <div class="info-row">
                 <div class="info-label">街道地址2</div>
-                <div class="info-value" id="billStreet2">无</div>
+                <div class="info-value" id="billStreet2">-</div>
                 <button class="copy-mini" data-bill="billStreet2">复制</button>
               </div>
               <div class="info-row">
                 <div class="info-label">城市</div>
-                <div class="info-value" id="billCity">East Hartford</div>
+                <div class="info-value" id="billCity">-</div>
                 <button class="copy-mini" data-bill="billCity">复制</button>
               </div>
               <div class="info-row">
                 <div class="info-label">州</div>
-                <div class="info-value" id="billState">Connecticut</div>
+                <div class="info-value" id="billState">-</div>
                 <button class="copy-mini" data-bill="billState">复制</button>
               </div>
               <div class="info-row">
                 <div class="info-label">邮编</div>
-                <div class="info-value" id="billZip">06118</div>
+                <div class="info-value" id="billZip">-</div>
                 <button class="copy-mini" data-bill="billZip">复制</button>
               </div>
               <div class="info-row">
                 <div class="info-label">国家</div>
-                <div class="info-value" id="billCountry">美国</div>
+                <div class="info-value" id="billCountry">-</div>
                 <button class="copy-mini" data-bill="billCountry">复制</button>
               </div>
             </div>
@@ -664,12 +664,12 @@
 
       const billingValues = {
         billName: "Donald Smith",
-        billStreet: "41 Glenn Rd C23",
-        billStreet2: "无",
-        billCity: "East Hartford",
-        billState: "Connecticut",
-        billZip: "06118",
-        billCountry: "美国",
+        billStreet: "-",
+        billStreet2: "-",
+        billCity: "-",
+        billState: "-",
+        billZip: "-",
+        billCountry: "-",
       };
 
       let batchSummaries = [];
@@ -858,14 +858,34 @@
         };
       };
 
-      const initBillingInfo = () => {
-        billName.textContent = billingValues.billName;
-        billStreet.textContent = billingValues.billStreet;
-        billStreet2.textContent = billingValues.billStreet2;
-        billCity.textContent = billingValues.billCity;
-        billState.textContent = billingValues.billState;
-        billZip.textContent = billingValues.billZip;
-        billCountry.textContent = billingValues.billCountry;
+      const updateBillingField = (key, value, element) => {
+        billingValues[key] = value || "-";
+        element.textContent = billingValues[key];
+      };
+
+      const updateBillingInfo = (payload) => {
+        const address =
+          payload && typeof payload === "object"
+            ? payload.legal_address ||
+              (payload.card && payload.card.legal_address) ||
+              null
+            : null;
+
+        updateBillingField("billName", "Donald Smith", billName);
+        updateBillingField("billStreet", address && address.address1, billStreet);
+        updateBillingField("billStreet2", address && address.address2, billStreet2);
+        updateBillingField("billCity", address && address.city, billCity);
+        updateBillingField("billState", address && address.region, billState);
+        updateBillingField(
+          "billZip",
+          address && address.postal_code,
+          billZip
+        );
+        updateBillingField(
+          "billCountry",
+          address && address.country,
+          billCountry
+        );
       };
 
       const callApi = async () => {
@@ -893,6 +913,7 @@
             ? `${finalResult.actionLabel}完成。`
             : `${finalResult.actionLabel}失败，请检查卡密或接口状态。`;
           updateCardInfo(finalResult.payload);
+          updateBillingInfo(finalResult.payload);
         } catch (error) {
           resultBox.textContent = JSON.stringify(
             { ok: false, error: error.message || "网络错误" },
@@ -901,6 +922,7 @@
           );
           statusText.textContent = "网络请求失败，请稍后再试。";
           updateCardInfo(null);
+          updateBillingInfo(null);
         } finally {
           setLoading(false, "完成");
         }
@@ -1118,7 +1140,7 @@
         }
       });
 
-      initBillingInfo();
+      updateBillingInfo(null);
       updateCardInfo(null);
     </script>
   </body>
